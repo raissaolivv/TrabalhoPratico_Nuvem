@@ -183,3 +183,4 @@ function carregarClientes(){
     .catch(error => console.error("Erro: ", error));
 }
 
+document.addEventListener("DOMContentLoaded", carregarClientes);
