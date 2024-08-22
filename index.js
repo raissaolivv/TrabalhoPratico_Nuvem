@@ -1,17 +1,23 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mysql = require("mysql");
+const path = require("path");
+const cors = require("cors");
 
 const app = express();
 const port = 3000;
 
+app.use(cors());
 app.use(bodyParser.json());
 
+// Serve arquivos estáticos da pasta raiz
+app.use(express.static(path.join(__dirname)));
+
 const db = mysql.createConnection({
-    host: "host-rds", //precisa preencher ainda
-    user: "user", //precisa preencher
-    senha: "senha", //precisa preencher
-    database: "nome-do-banco" //precisa preencher
+    host: "localhost", //precisa preencher ainda
+    user: "root", //precisa preencher
+    password: "root", //precisa preencher
+    database: "estoque" //precisa preencher
 });
 
 db.connect((err) => {
