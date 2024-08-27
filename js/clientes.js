@@ -47,19 +47,26 @@ modal.btnSalvar.addEventListener('click', (e) => {
     const linha = document.querySelector('tr[data-editing="true"]');
 
     if (linha) {
+
+        console.log(modal.cpf.value);
+
         // Atualiza os dados na linha
         linha.cells[0].textContent = cliente.nome;
         linha.cells[1].textContent = cliente.cpf;
         linha.cells[2].textContent = cliente.dataNascimento;
         linha.cells[3].textContent = cliente.email;
 
+        console.log(linha.getAttribute("original_cpf"));
+
         linha.removeAttribute('data-editing'); // Remove o identificador de edição
+
+        atualizarCliente(cliente, linha.getAttribute("original_cpf"));
     } else {
         // Se não for uma edição, adiciona uma nova linha
         adicionarClienteNaTabela(cliente);
+        salvarCliente(cliente);
+        limparCampos();
     }
-    salvarCliente(cliente);
-    limparCampos();
     fecharModalCliente();
 });
 
@@ -93,7 +100,7 @@ function criarCliente(){
 }
 
 function salvarCliente(cliente){
-    fetch("/clientes", {
+    fetch("http://52.15.243.61:3000/clientes", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -160,27 +167,67 @@ function editarCliente(event){
    modal.dataNascimento.value = dataNascimento;
    modal.email.value = email;
    
+    linha.setAttribute("original_cpf", cpf);
+
     linha.setAttribute("data-editing", "true");  
     $("#cadastro-cliente").modal({backdrop: "static"});   
      
 }
 
-function excluirCliente(event){
+
+function excluirCliente(event) {
     const linha = event.target.closest("tr");
-    const tabela = document.getElementById("tabelaClientes");
-    const rowIndex = linha.rowIndex;
-    tabela.deleteRow(rowIndex);
+    const cpf = linha.getElementsByTagName("td")[1].textContent; // Supondo que a linha tenha um atributo data-id com o ID do cliente
+    console.log(linha.getElementsByTagName("td")[1].textContent);
+
+    fetch(`http://52.15.243.61:3000/clientes/${cpf}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+        if (response.ok) {
+            const tabela = document.getElementById("tabelaClientes");
+            const rowIndex = linha.rowIndex;
+            tabela.deleteRow(rowIndex);
+            console.log("Cliente excluído com sucesso.");
+        } else {
+            console.error("Erro ao excluir cliente.");
+        }
+    })
+    .catch(error => console.error("Erro ao excluir cliente:", error));
 }
 
 function carregarClientes(){
-    fetch("/clientes")
-    .then(response => response.json())
+    console.log("GetClientes clientes.js\n");
+    fetch("http://52.15.243.61:3000/clientes", {  // Substitua pela URL correta
+        method: "GET"
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(clientes => {
-        clientes.forEach(cliente =>{
-                adicionarClienteNaTabela(cliente);
+        clientes.forEach(cliente => {
+            adicionarClienteNaTabela(cliente);
         });
     })
     .catch(error => console.error("Erro: ", error));
+}
+
+function atualizarCliente(cliente, cpfOriginal) {
+    fetch(`http://52.15.243.61:3000/clientes/${cpfOriginal}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(cliente)
+    })
+    .then(response => response.text())
+    .then(data => {
+        console.log("Cliente atualizado", data);
+    })
+    .catch(error => console.error("Erro ao atualizar cliente:", error));
 }
 
 document.addEventListener("DOMContentLoaded", carregarClientes);
