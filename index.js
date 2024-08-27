@@ -1,8 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mysql = require("mysql");
-const path = require("path");
-const cors = require("cors");
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
@@ -10,14 +9,12 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Serve arquivos estáticos da pasta raiz
-app.use(express.static(path.join(__dirname)));
 
 const db = mysql.createConnection({
-    host: "localhost", //precisa preencher ainda
-    user: "root", //precisa preencher
-    password: "root", //precisa preencher
-    database: "estoque" //precisa preencher
+    host: "clientes.cxi2mi8ga145.us-east-2.rds.amazonaws.com", //precisa preencher ainda
+    user: "admin", //precisa preencher
+    password: "adminadmin", //precisa preencher
+    database: "clientes" //precisa preencher
 });
 
 db.connect((err) => {
@@ -40,12 +37,46 @@ app.post("/clientes", (req, res) =>{
 });
 
 app.get("/clientes", (req, res) =>{
-    const sql = "SELECT * FROM clientes";
+    console.log("GetClientes\n")
+    const sql = "SELECT * FROM clientes;";
     db.query(sql, (err, results) =>{
         if(err){
             return res.status(500).send("Erro ao buscar clientes");
         }
         res.json(results);
+    });
+});
+
+app.delete("/clientes/:cpf", (req, res) => {
+    const { cpf } = req.params;
+    const sql = "DELETE FROM clientes WHERE cpf = ?";
+
+    db.query(sql, [cpf], (err, result) => {
+        if (err) {
+            return res.status(500).send("Erro ao excluir cliente");
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).send("Cliente não encontrado");
+        }
+        res.status(200).send("Cliente excluído com sucesso");
+    });
+});
+
+app.put("/clientes/:cpf", (req, res) => {
+    const { cpf } = req.params;
+    const { nome, dataNascimento, email } = req.body;
+    console.log(cpf);
+    console.log(req.body);
+    const sql = "UPDATE clientes SET nome = ?, dataNascimento = ?, email = ? WHERE cpf = ?";
+
+    db.query(sql, [nome, dataNascimento, email, cpf], (err, result) => {
+        if (err) {
+            return res.status(500).send("Erro ao atualizar cliente");
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).send("Cliente não encontrado");
+        }
+        res.status(200).send("Cliente atualizado com sucesso");
     });
 });
 
